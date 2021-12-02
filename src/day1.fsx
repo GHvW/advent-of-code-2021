@@ -1,5 +1,8 @@
+#load "helpers.fsx"
+
 open System
 open System.IO
+open Helpers
 
 let miniinput =
     [ 199
@@ -15,9 +18,6 @@ let miniinput =
 
 
 let increased x y = x < y
-
-
-let uncurry2 f (x, y) = f x y
 
 
 let findIncreaseCount: seq<int> -> int =
