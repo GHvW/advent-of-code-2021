@@ -9,9 +9,6 @@ open Helpers
 // I had a little too much fun being far to uncleverly clever
 
 
-let gammaToEpsilon: int -> int = (~~~)
-
-
 let bitSteps max =
     Seq.unfold
         (fun bit ->
@@ -28,7 +25,7 @@ let vectorAdd (vec1: seq<int>) (vec2: seq<int>) : seq<int> =
     vec2 |> Seq.zip vec1 |> Seq.map (uncurry2 (+))
 
 
-let bitsAsVector n = bitSteps n |> Seq.map ((&&&) n)
+let bitsAsVector n = bitSteps n |> Seq.mapi (fun index next -> (n &&& next) >>> index)
 
 
 let ensureEqualVecSize (vec: int []) (n, bitcount) : seq<int> * seq<int> =
@@ -44,22 +41,23 @@ let reducer =
     >> Seq.toArray
 
 
-let addBitToInt it (index, bit) = it ||| (bit <<< index)
+let addBitToInt it index = it ||| (1 <<< index)
 
 
 let bitCount = float >> Math.Log2 >> int
 
 
-let toGamma countsVec totalCount =
-    let mid = totalCount / 2 // check this
+let powerConsumption (countsVec, totalCount) : int =
+    let mid = totalCount / 2
 
     countsVec
-    |> Seq.mapi (fun i n -> if n > mid then (1, i) else (0, i))
-    |> Seq.fold addBitToInt 0
-
-let powerConsumption (countsVec, totalCount) =
-    let gamma = toGamma countsVec totalCount
-    gamma * (gammaToEpsilon gamma)
+    |> Seq.zip (Seq.initInfinite id)
+    |> Seq.fold (fun (gamma, epsilon) (i, next) ->
+        if next > mid then
+            (addBitToInt gamma i, epsilon)
+        else
+            (gamma, addBitToInt epsilon i)) (0, 0)
+    |> (uncurry2 (*))
 
 
 let data =
@@ -75,3 +73,6 @@ let result =
 
 
 printfn "power consumption is %i" result
+
+
+// -------------------- Part 2 ----------------------------
